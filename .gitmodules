@@ -7,3 +7,6 @@
 [submodule "orders-ms"]
 	path = orders-ms
 	url = https://github.com/NestMicroservices-CJJC/orders-ms.git
+[submodule "payments-ms"]
+	path = payments-ms
+	url = https://github.com/NestMicroservices-CJJC/payments-ms.git
