@@ -24,8 +24,35 @@ services:
     command: npm run start:dev
     environment:
       - PORT=3001
-      - NATS_SERVERS=nats://nats-server:4222
       - DATABASE_URL=file:./dev.db
+      - NATS_SERVERS=nats://nats-server:4222
+
+  auth-db:
+    container_name: auth-db
+    image: postgres:16.2
+    restart: always
+    volumes:
+      - ./auth-ms/postgres:/var/lib/postgresql/data
+    ports:
+      - ${AUTH_DATABASE_PORT}:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=auth-db
+
+  # Orders DB
+  orders-db:
+    container_name: orders_database
+    image: postgres:16.2
+    restart: always
+    volumes:
+      - ./orders-ms/postgres:/var/lib/postgresql/data
+    ports:
+      - ${ORDERS_DATABASE_PORT}:${ORDERS_DATABASE_PORT}
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=ordersdb
 
   # Orders MS
   orders-ms:
@@ -37,22 +64,9 @@ services:
     command: npm run start:dev
     environment:
       - PORT=3002
-      - DATABASE_URL=postgresql://postgres:123456@orders-db:5432/ordersdb?schema=public
+      - DATABASE_URL=${ORDERS_DATABASE_URL}
       - NATS_SERVERS=nats://nats-server:4222
 
-  # Orders DB
-  orders-db:
-    container_name: orders_database
-    image: postgres:16.2
-    restart: always
-    volumes:
-      - ./orders-ms/postgres:/var/lib/postgresql/data
-    ports:
-      - 5432:5432
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=123456
-      - POSTGRES_DB=ordersdb
   # ============================================
   # PAYMENTS - MS
   # ============================================
@@ -74,6 +88,8 @@ services:
 
   # Auth MS
   auth-ms:
+    depends_on:
+      - auth-db
     container_name: auth-ms
     build: ./auth-ms
     volumes:
