@@ -15,15 +15,60 @@ services:
       - PORT=${CLIENT_GATEWAY_PORT}
       - NATS_SERVERS=nats://nats-server:4222
 
-  # products-ms:
-  #   build: ./products-ms
-  #   volumes:
-  #     - ./products-ms/src:/usr/src/app/src
-  #   command: npm run start:dev
-  #   environment:
-  #     - PORT=3001
-  #     - DATABASE_URL=file:./dev.db
-  #     - NATS_SERVERS=nats://nats-server:4222
+  # Auth MS
+  auth-ms:
+    build:
+      context: ./auth-ms
+      dockerfile: dockerfile.prod
+      args:
+        - AUTH_DATABASE_URL=${AUTH_DATABASE_URL}
+    image: auth-ms-prod
+    environment:
+      - PORT=3000
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=${AUTH_DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+
+  # Orders MS
+  orders-ms:
+    build:
+      context: ./orders-ms
+      dockerfile: dockerfile.prod
+      args:
+        - ORDERS_DATABASE_URL=${ORDERS_DATABASE_URL}
+    image: order-ms-prod
+    environment:
+      - PORT=3000
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=${ORDERS_DATABASE_URL}
+
+  products-ms:
+    build:
+      context: ./products-ms
+      dockerfile: dockerfile.prod
+    image: products-ms-prod
+    environment:
+      - PORT=3000
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=file:./dev.db
+
+  # # ============================================
+  # # PAYMENTS - MS
+  # # ============================================
+  payments-ms:
+    build:
+      context: ./payments-ms
+      dockerfile: dockerfile.prod
+    image: payments-ms-prod
+    ports:
+      - ${PAYMENTS_MS_PORT}:${PAYMENTS_MS_PORT}
+    environment:
+      - PORT=${PAYMENTS_MS_PORT}
+      - NATS_SERVERS=nats://nats-server:4222
+      - STRIPE_SECRET=${STRIPE_SECRET}
+      - STRIPE_SUCCESS_URL=${STRIPE_SUCCESS_URL}
+      - STRIPE_CANCEL_URL=${STRIPE_CANCEL_URL}
+      - STRIPE_ENDPOINT_SECRET=${STRIPE_ENDPOINT_SECRET}
 
   # auth-db:
   #   container_name: auth-db
@@ -51,50 +96,3 @@ services:
   #     - POSTGRES_USER=postgres
   #     - POSTGRES_PASSWORD=123456
   #     - POSTGRES_DB=ordersdb
-
-  # # Orders MS
-  # orders-ms:
-  #   depends_on:
-  #     - orders-db
-  #   build: ./orders-ms
-  #   volumes:
-  #     - ./orders-ms/src:/usr/src/app/src
-  #   command: npm run start:dev
-  #   environment:
-  #     - PORT=3002
-  #     - DATABASE_URL=${ORDERS_DATABASE_URL}
-  #     - NATS_SERVERS=nats://nats-server:4222
-
-  # # ============================================
-  # # PAYMENTS - MS
-  # # ============================================
-  # payments-ms:
-  #   container_name: payments-ms
-  #   build: ./payments-ms
-  #   volumes:
-  #     - ./payments-ms/src:/usr/src/app/src
-  #   ports:
-  #     - ${PAYMENT_MS_PORT}:${PAYMENT_MS_PORT}
-  #   command: npm run start:dev
-  #   environment:
-  #     - PORT=${PAYMENT_MS_PORT}
-  #     - NATS_SERVERS=nats://nats-server:4222
-  #     - STRIPE_SECRET=${STRIPE_SECRET}
-  #     - STRIPE_SUCCESS_URL=${STRIPE_SUCCESS_URL}
-  #     - STRIPE_CANCEL_URL=${STRIPE_CANCEL_URL}
-  #     - STRIPE_ENDPOINT_SECRET=${STRIPE_ENDPOINT_SECRET}
-
-  # # Auth MS
-  # auth-ms:
-  #   depends_on:
-  #     - auth-db
-  #   container_name: auth-ms
-  #   build: ./auth-ms
-  #   volumes:
-  #     - ./auth-ms/src:/usr/src/app/src
-  #   command: npm run start:dev
-  #   environment:
-  #     - PORT=3004
-  #     - NATS_SERVERS=nats://nats-server:4222
-  #     - DATABASE_URL=${AUTH_DATABASE_URL}
-  #     - JWT_SECRET=${JWT_SECRET}
